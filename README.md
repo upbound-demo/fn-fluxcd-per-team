@@ -13,8 +13,8 @@ resource so that it's applied to a remote cluster.
 It expects a `spec.teams` field with a list of team entries whose struct has to
 comply with the `Team` struct defined [here](./teams.go) in this repository and
 the composition needs to have an object of type `XEKS` in `demo.upbound.io` group
-whose name will be used as the `providerConfigRef.name` of all generated `Object`
-resources.
+whose `spec.nameForProviderConfigs` will be used as `spec.providerConfigRef.name`
+of the generated `Object`s.
 
 ## Developing
 
