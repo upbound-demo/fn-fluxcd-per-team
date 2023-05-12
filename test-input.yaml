@@ -6,14 +6,80 @@ observed:
       apiVersion: demo.upbound.io/v1alpha1
       kind: XKubernetesCluster
       metadata:
-        name: mycluster
+        creationTimestamp: "2023-05-12T13:38:26Z"
+        finalizers:
+          - composite.apiextensions.crossplane.io
+        generateName: muvaf-app-dev-2-
+        generation: 7
+        labels:
+          crossplane.io/claim-name: muvaf-app-dev-2
+          crossplane.io/claim-namespace: default
+          crossplane.io/composite: muvaf-app-dev-2-2rcj8
+          kustomize.toolkit.fluxcd.io/name: prod-dev-runtime
+          kustomize.toolkit.fluxcd.io/namespace: flux-system
+        name: muvaf-app-dev-2-2rcj8
+        resourceVersion: "376243"
+        uid: bb174f81-99e0-4f2b-a2b6-a0feb516e699
       spec:
+        claimRef:
+          apiVersion: demo.upbound.io/v1alpha1
+          kind: KubernetesCluster
+          name: muvaf-app-dev-2
+          namespace: default
+        compositionRef:
+          name: xkubernetesclusters.demo.upbound.io
+        compositionRevisionRef:
+          name: xkubernetesclusters.demo.upbound.io-eaf1cb5
+        compositionUpdatePolicy: Automatic
+        environmentConfigRefs:
+          - apiVersion: apiextensions.crossplane.io/v1alpha1
+            kind: EnvironmentConfig
+            name: controlplane
+        nodes:
+          count: 3
+          size: small
+        resourceRefs:
+          - apiVersion: demo.upbound.io/v1alpha1
+            kind: XNetwork
+            name: muvaf-app-dev-2-2rcj8-2jhbf
+          - apiVersion: demo.upbound.io/v1alpha1
+            kind: XEKS
+            name: muvaf-app-dev-2-2rcj8-29fvx
+          - apiVersion: helm.crossplane.io/v1beta1
+            kind: Release
+            name: muvaf-app-dev-2-2rcj8-ln85g
         teams:
-          - name: team-blue
-            repository: "https://github.com/upbound-demo/team-blue"
-            environments:
+          - environments:
               - name: dev
                 path: ./dev
+              - name: staging
+                path: ./staging
+              - name: production
+                path: ./production
+            name: team-blue
+            repository: https://github.com/upbound-demo/team-blue
+        writeConnectionSecretToRef:
+          name: bb174f81-99e0-4f2b-a2b6-a0feb516e699
+          namespace: upbound-system
+      status:
+        conditions:
+          - lastTransitionTime: "2023-05-12T13:40:53Z"
+            reason: ReconcileSuccess
+            status: "True"
+            type: Synced
+          - lastTransitionTime: "2023-05-12T13:40:53Z"
+            reason: Creating
+            status: "False"
+            type: Ready
+        connectionDetails:
+          lastPublishedTime: "2023-05-12T13:40:53Z"
+        securityGroupIds:
+          - sg-0ccaa5aea99dfc63c
+        subnetIds:
+          - subnet-033704d484c34fa6e
+          - subnet-048396185299f7596
+          - subnet-03a061079d3730425
+          - subnet-00b53b528c6592532
   resources:
     - name: compositeClusterEKS
       resource:

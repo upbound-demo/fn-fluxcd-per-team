@@ -56,7 +56,7 @@ type Environment struct {
 }
 
 func GetResources(namespace, providerConfigName string, teams []TeamEntry) ([]v1alpha1.DesiredResource, error) {
-	resources := make([]v1alpha1.DesiredResource, len(teams)+1)
+	resources := []v1alpha1.DesiredResource{}
 	for _, team := range teams {
 		gr := GitRepository(team.Name, namespace, team.Repository)
 		grRaw, err := json.Marshal(gr)
@@ -67,11 +67,11 @@ func GetResources(namespace, providerConfigName string, teams []TeamEntry) ([]v1
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to wrap GitRepository %s into Object", gr.GetName())
 		}
-		resources[0] = v1alpha1.DesiredResource{
+		resources = append(resources, v1alpha1.DesiredResource{
 			Name:     "gitrepository-" + team.Name,
 			Resource: grORaw,
-		}
-		for i, env := range team.Environments {
+		})
+		for _, env := range team.Environments {
 			k := Kustomization(team.Name+"-"+env.Name, gr, WithPath(env.Path))
 			kRaw, err := json.Marshal(k)
 			if err != nil {
@@ -81,10 +81,10 @@ func GetResources(namespace, providerConfigName string, teams []TeamEntry) ([]v1
 			if err != nil {
 				return nil, errors.Wrapf(err, "failed to wrap GitRepository %s into Object", gr.GetName())
 			}
-			resources[i+1] = v1alpha1.DesiredResource{
+			resources = append(resources, v1alpha1.DesiredResource{
 				Name:     "kustomization-" + team.Name + "-" + env.Name,
 				Resource: kORaw,
-			}
+			})
 		}
 	}
 	return resources, nil
