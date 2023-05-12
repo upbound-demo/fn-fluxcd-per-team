@@ -3,10 +3,12 @@ package main
 import (
 	"time"
 
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+
 	kustomizev1 "github.com/fluxcd/kustomize-controller/api/v1"
 
 	sourcev1 "github.com/fluxcd/source-controller/api/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 const (
@@ -34,7 +36,11 @@ func GitRepository(name, namespace, repoUrl string, overrides ...GitRepositoryOv
 			},
 		},
 	}
-	gr.SetGroupVersionKind(sourcev1.GroupVersion.WithKind(sourcev1.GitRepositoryKind))
+	gr.SetGroupVersionKind(schema.GroupVersionKind{
+		Group:   sourcev1.GroupVersion.Group,
+		Version: "v1beta2",
+		Kind:    sourcev1.GitRepositoryKind,
+	})
 	for _, override := range overrides {
 		override(gr)
 	}
@@ -66,7 +72,11 @@ func Kustomization(name string, gr *sourcev1.GitRepository, overrides ...Kustomi
 			},
 		},
 	}
-	k.SetGroupVersionKind(kustomizev1.GroupVersion.WithKind(kustomizev1.KustomizationKind))
+	k.SetGroupVersionKind(schema.GroupVersionKind{
+		Group:   kustomizev1.GroupVersion.Group,
+		Version: "v1beta2",
+		Kind:    kustomizev1.KustomizationKind,
+	})
 	for _, override := range overrides {
 		override(k)
 	}
