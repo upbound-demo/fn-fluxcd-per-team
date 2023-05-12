@@ -1,9 +1,8 @@
 package main
 
 import (
+	kubernetesv1alpha1 "github.com/crossplane-contrib/provider-kubernetes/apis/object/v1alpha1"
 	"github.com/crossplane/crossplane-runtime/pkg/errors"
-	"github.com/crossplane/crossplane-runtime/pkg/password"
-	"github.com/crossplane/crossplane/apis/apiextensions/fn/io/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/json"
 )
@@ -33,21 +32,22 @@ type Environment struct {
 	Path string `json:"path"`
 }
 
-func GetResources(compositeName, fluxNamespace, providerConfigName string, teams []TeamEntry) ([]v1alpha1.DesiredResource, error) {
-	resources := []v1alpha1.DesiredResource{}
+type DesiredResource struct {
+	Name     string
+	Resource *kubernetesv1alpha1.Object
+}
+
+func GetResources(fluxNamespace, providerConfigName string, teams []TeamEntry) ([]DesiredResource, error) {
+	resources := []DesiredResource{}
 	for _, team := range teams {
 		gr := GitRepository(team.Name, fluxNamespace, team.Repository)
 		grRaw, err := json.Marshal(gr)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to marshal GitRepository %s", gr.GetName())
 		}
-		grORaw, err := WrapForKubernetes(generateObjectName(compositeName), providerConfigName, runtime.RawExtension{Raw: grRaw})
-		if err != nil {
-			return nil, errors.Wrapf(err, "failed to wrap GitRepository %s into Object", gr.GetName())
-		}
-		resources = append(resources, v1alpha1.DesiredResource{
+		resources = append(resources, DesiredResource{
 			Name:     "gitrepository-" + team.Name,
-			Resource: grORaw,
+			Resource: WrapForKubernetes(providerConfigName, runtime.RawExtension{Raw: grRaw}),
 		})
 		for _, env := range team.Environments {
 			k := Kustomization(team.Name+"-"+env.Name, gr, WithPath(env.Path))
@@ -55,23 +55,11 @@ func GetResources(compositeName, fluxNamespace, providerConfigName string, teams
 			if err != nil {
 				return nil, errors.Wrapf(err, "failed to marshal Kustomization %s", k.GetName())
 			}
-			kORaw, err := WrapForKubernetes(generateObjectName(compositeName), providerConfigName, runtime.RawExtension{Raw: kRaw})
-			if err != nil {
-				return nil, errors.Wrapf(err, "failed to wrap GitRepository %s into Object", gr.GetName())
-			}
-			resources = append(resources, v1alpha1.DesiredResource{
+			resources = append(resources, DesiredResource{
 				Name:     "kustomization-" + team.Name + "-" + env.Name,
-				Resource: kORaw,
+				Resource: WrapForKubernetes(providerConfigName, runtime.RawExtension{Raw: kRaw}),
 			})
 		}
 	}
 	return resources, nil
-}
-
-func generateObjectName(prefix string) string {
-	suf, _ := password.Settings{
-		CharacterSet: "abcdefghijklmnopqrstuvwxyz0123456789",
-		Length:       5,
-	}.Generate()
-	return prefix + "-" + suf
 }

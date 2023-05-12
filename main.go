@@ -5,6 +5,13 @@ import (
 	"io"
 	"os"
 
+	"k8s.io/apimachinery/pkg/runtime"
+
+	"k8s.io/apimachinery/pkg/util/json"
+
+	"github.com/crossplane/crossplane-runtime/pkg/password"
+	"github.com/crossplane/crossplane-runtime/pkg/resource/unstructured/composed"
+
 	"github.com/crossplane/crossplane-runtime/pkg/errors"
 
 	"github.com/crossplane/crossplane-runtime/pkg/fieldpath"
@@ -40,6 +47,15 @@ func Run(in []byte) (string, error) {
 	if err := yaml.Unmarshal(obj.Observed.Composite.Resource.Raw, &xkubernetesCluster.Unstructured); err != nil {
 		return "", errors.Wrap(err, "failed to unmarshal observed composite")
 	}
+	observedResources := make(map[string]*composed.Unstructured, len(obj.Observed.Resources))
+	for _, entry := range obj.Observed.Resources {
+		u := composed.New()
+		if err := yaml.Unmarshal(entry.Resource.Raw, &u.Unstructured); err != nil {
+			return "", errors.Wrap(err, "failed to unmarshal observed resource")
+		}
+		observedResources[entry.Name] = u
+	}
+
 	teams, err := GetTeamEntries(fieldpath.Pave(xkubernetesCluster.Object))
 	if err != nil {
 		return "", errors.Wrap(err, "failed to get teams from observed composite")
@@ -48,15 +64,42 @@ func Run(in []byte) (string, error) {
 	if err != nil {
 		return "", errors.Wrap(err, "failed to get XEKS name from observed composite")
 	}
-	resources, err := GetResources(xkubernetesCluster.GetName(), NamespaceForFlux, providerConfigName, teams)
+	resources, err := GetResources(NamespaceForFlux, providerConfigName, teams)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to generate resources")
 	}
 
-	obj.Desired.Resources = append(obj.Desired.Resources, resources...)
+	// Composition resource identifier and actual resource names. We need to generate
+	// a new name for those who don't have an actual resource name.
+	rawResources := make([]v1alpha1.DesiredResource, len(resources))
+	for i, r := range resources {
+		if o, ok := observedResources[r.Name]; ok {
+			resources[i].Resource.SetName(o.GetName())
+		} else {
+			resources[i].Resource.SetName(generateObjectName(xkubernetesCluster.GetName()))
+		}
+		raw, err := json.Marshal(r.Resource)
+		if err != nil {
+			return "", errors.Wrapf(err, "failed to marshal generated resource %s", r.Name)
+		}
+		rawResources[i] = v1alpha1.DesiredResource{
+			Name:     r.Name,
+			Resource: runtime.RawExtension{Raw: raw},
+		}
+	}
+
+	obj.Desired.Resources = append(obj.Desired.Resources, rawResources...)
 	result, err := yaml.Marshal(obj)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to marshal resulting functionio")
 	}
 	return string(result), nil
+}
+
+func generateObjectName(prefix string) string {
+	suf, _ := password.Settings{
+		CharacterSet: "abcdefghijklmnopqrstuvwxyz0123456789",
+		Length:       5,
+	}.Generate()
+	return prefix + "-" + suf
 }

@@ -1,16 +1,13 @@
 package main
 
 import (
-	v1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
-	"github.com/crossplane/crossplane-runtime/pkg/errors"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/util/json"
-
 	kubernetesv1alpha1 "github.com/crossplane-contrib/provider-kubernetes/apis/object/v1alpha1"
+	v1 "github.com/crossplane/crossplane-runtime/apis/common/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 )
 
-func WrapForKubernetes(name, providerConfigName string, in runtime.RawExtension) (runtime.RawExtension, error) {
-	o := kubernetesv1alpha1.Object{
+func WrapForKubernetes(providerConfigName string, in runtime.RawExtension) *kubernetesv1alpha1.Object {
+	o := &kubernetesv1alpha1.Object{
 		Spec: kubernetesv1alpha1.ObjectSpec{
 			ForProvider: kubernetesv1alpha1.ObjectParameters{
 				Manifest: in,
@@ -23,10 +20,5 @@ func WrapForKubernetes(name, providerConfigName string, in runtime.RawExtension)
 		},
 	}
 	o.SetGroupVersionKind(kubernetesv1alpha1.ObjectGroupVersionKind)
-	o.SetName(name)
-	raw, err := json.Marshal(o)
-	if err != nil {
-		return runtime.RawExtension{}, errors.Wrap(err, "failed to marshal object")
-	}
-	return runtime.RawExtension{Raw: raw}, nil
+	return o
 }
