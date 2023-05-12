@@ -7,29 +7,6 @@ import (
 	"k8s.io/apimachinery/pkg/util/json"
 )
 
-const (
-	EnvironmentDev     = "development"
-	EnvironmentStaging = "staging"
-	EnvironmentProd    = "production"
-)
-
-var (
-	EnvironmentsDefault = []Environment{
-		{
-			Name: EnvironmentDev,
-			Path: EnvironmentDev,
-		},
-		{
-			Name: EnvironmentStaging,
-			Path: EnvironmentStaging,
-		},
-		{
-			Name: EnvironmentProd,
-			Path: EnvironmentProd,
-		},
-	}
-)
-
 type TeamEntry struct {
 	// Name of the team.
 	Name string `json:"name"`
