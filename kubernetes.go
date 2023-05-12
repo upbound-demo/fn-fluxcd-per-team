@@ -22,6 +22,7 @@ func WrapForKubernetes(in runtime.RawExtension, providerConfigName string) (runt
 			},
 		},
 	}
+	o.SetGroupVersionKind(kubernetesv1alpha1.ObjectGroupVersionKind)
 	raw, err := json.Marshal(o)
 	if err != nil {
 		return runtime.RawExtension{}, errors.Wrap(err, "failed to marshal object")

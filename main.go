@@ -53,7 +53,7 @@ func Run(in []byte) (string, error) {
 		return "", errors.Wrap(err, "failed to generate resources")
 	}
 
-	obj.Desired.Resources = resources
+	obj.Desired.Resources = append(obj.Desired.Resources, resources...)
 	result, err := yaml.Marshal(obj)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to marshal resulting functionio")

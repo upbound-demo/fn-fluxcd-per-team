@@ -21,7 +21,7 @@ of the generated `Object`s.
 Run the test.
 ```bash
 cat test-input.yaml | go run . > /tmp/result.yaml
-diff /tmp/result.yaml test-output.yaml
+diff <(yq -P 'sort_keys(..)' /tmp/result.yaml) <(yq -P 'sort_keys(..)' test-output.yaml)
 ```
 
 Build and push the image.
