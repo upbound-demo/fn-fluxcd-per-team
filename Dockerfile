@@ -10,6 +10,8 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o /function .
 ###
 FROM alpine:3.17.3
 
+LABEL org.opencontainers.image.source="https://github.com/upbound-demo/xfn-fluxcd-per-team"
+
 COPY crossplane.yaml /crossplane.yaml
 COPY --from=builder /function /function
 
