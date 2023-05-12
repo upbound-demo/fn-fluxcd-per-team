@@ -1,11 +1,13 @@
 package main
 
 import (
-	"strings"
+	"github.com/crossplane/crossplane-runtime/pkg/resource/unstructured/composed"
+	"k8s.io/apimachinery/pkg/util/json"
+
+	"github.com/crossplane/crossplane/apis/apiextensions/fn/io/v1alpha1"
 
 	"github.com/crossplane/crossplane-runtime/pkg/errors"
 	"github.com/crossplane/crossplane-runtime/pkg/fieldpath"
-	"github.com/crossplane/crossplane-runtime/pkg/resource/unstructured/composite"
 )
 
 func GetTeamEntries(cp *fieldpath.Paved) ([]TeamEntry, error) {
@@ -16,11 +18,21 @@ func GetTeamEntries(cp *fieldpath.Paved) ([]TeamEntry, error) {
 	return teams, nil
 }
 
-func GetXEKSName(cp *composite.Unstructured) (string, error) {
-	for _, ref := range cp.GetResourceReferences() {
-		if ref.Kind == "XEKS" && strings.HasPrefix(ref.APIVersion, "demo.upbound.io/") {
-			return ref.Name, nil
+func GetNameForProviderConfigs(observed []v1alpha1.ObservedResource) (string, error) {
+	for _, r := range observed {
+		comp := composed.New()
+		if err := json.Unmarshal(r.Resource.Raw, &comp.Unstructured); err != nil {
+			return "", errors.Wrap(err, "failed to unmarshal observed resource")
 		}
+		gvk := comp.GroupVersionKind()
+		if gvk.Kind != "XEKS" || gvk.Group != "demo.upbound.io" {
+			continue
+		}
+		name, err := fieldpath.Pave(comp.Object).GetString("spec.nameForProviderConfigs")
+		if err != nil {
+			return "", errors.Wrap(err, "failed to get spec.nameForProviderConfigs from XEKS")
+		}
+		return name, nil
 	}
 	return "", errors.New("failed to find XEKS reference")
 }

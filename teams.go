@@ -3,7 +3,6 @@ package main
 import (
 	"github.com/crossplane/crossplane-runtime/pkg/errors"
 	"github.com/crossplane/crossplane/apis/apiextensions/fn/io/v1alpha1"
-	kustomizev1 "github.com/fluxcd/kustomize-controller/api/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/json"
 )
@@ -57,10 +56,8 @@ type Environment struct {
 }
 
 func GetResources(namespace, providerConfigName string, teams []TeamEntry) ([]v1alpha1.DesiredResource, error) {
-	resources := make([]v1alpha1.DesiredResource, len(teams))
+	resources := make([]v1alpha1.DesiredResource, len(teams)+1)
 	for _, team := range teams {
-		k := make([]*kustomizev1.Kustomization, len(team.Environments))
-
 		gr := GitRepository(team.Name, namespace, team.Repository)
 		grRaw, err := json.Marshal(gr)
 		if err != nil {
@@ -75,10 +72,10 @@ func GetResources(namespace, providerConfigName string, teams []TeamEntry) ([]v1
 			Resource: grORaw,
 		}
 		for i, env := range team.Environments {
-			k[i] = Kustomization(team.Name+"-"+env.Name, gr, WithPath(env.Path))
-			kRaw, err := json.Marshal(k[i])
+			k := Kustomization(team.Name+"-"+env.Name, gr, WithPath(env.Path))
+			kRaw, err := json.Marshal(k)
 			if err != nil {
-				return nil, errors.Wrapf(err, "failed to marshal Kustomization %s", k[i].GetName())
+				return nil, errors.Wrapf(err, "failed to marshal Kustomization %s", k.GetName())
 			}
 			kORaw, err := WrapForKubernetes(runtime.RawExtension{Raw: kRaw}, providerConfigName)
 			if err != nil {

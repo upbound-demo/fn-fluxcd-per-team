@@ -1,0 +1,54 @@
+apiVersion: apiextensions.crossplane.io/v1alpha1
+kind: FunctionIO
+observed:
+  composite:
+    resource:
+      apiVersion: demo.upbound.io/v1alpha1
+      kind: XKubernetesCluster
+      metadata:
+        name: mycluster
+      spec:
+        teams:
+          - name: team-blue
+            repository: "https://github.com/upbound-demo/team-blue"
+            environments:
+              - name: dev
+                path: ./dev
+  resources:
+    - name: compositeClusterEKS
+      resource:
+        apiVersion: demo.upbound.io/v1alpha1
+        kind: XEKS
+        metadata:
+          name: app-dev-1-6hctt-d6j6m
+        spec:
+          nameForProviderConfigs: app-dev-1-6hctt
+        status:
+          subnetIds:
+            - subnet-1234567890abcdef0
+desired:
+  composite:
+    resource:
+      apiVersion: demo.upbound.io/v1alpha1
+      kind: XKubernetesCluster
+      metadata:
+        name: mycluster
+      spec:
+        resourceRefs:
+          - name: app-dev-1-6hctt-d6j6m
+            kind: XEKS
+            apiVersion: demo.upbound.io/v1alpha1
+        teams:
+          - name: team-blue
+            repository: "https://github.com/upbound-demo/team-blue"
+            environments:
+              - name: dev
+                path: ./dev
+  resources:
+    - name: compositeClusterEKS
+      resource:
+        apiVersion: demo.upbound.io/v1alpha1
+        kind: XEKS
+        status:
+          subnetIds:
+            - subnet-1234567890abcdef0

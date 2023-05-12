@@ -44,9 +44,7 @@ func Run(in []byte) (string, error) {
 	if err != nil {
 		return "", errors.Wrap(err, "failed to get teams from observed composite")
 	}
-	// NOTE(muvaf): This assumes that the ProviderConfig of the cluster for
-	// provider-kubernetes has the same name as the XEKS resource.
-	providerConfigName, err := GetXEKSName(xkubernetesCluster)
+	providerConfigName, err := GetNameForProviderConfigs(obj.Observed.Resources)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to get XEKS name from observed composite")
 	}

@@ -1,0 +1,66 @@
+apiVersion: apiextensions.crossplane.io/v1alpha1
+kind: FunctionIO
+observed:
+  composite:
+    resource:
+      apiVersion: demo.upbound.io/v1alpha1
+      kind: XKubernetesCluster
+      metadata:
+        name: mycluster
+  resources:
+    - name: compositeClusterEKS
+      resource:
+        apiVersion: demo.upbound.io/v1alpha1
+        kind: XEKS
+        spec:
+          teams:
+            - name: team-blue
+              repository: "https://github.com/upbound-demo/team-blue"
+              environments:
+                - name: dev
+                  path: ./dev
+        status:
+          subnetIds:
+            - subnet-1234567890abcdef0
+desired:
+  composite:
+    resource:
+      apiVersion: demo.upbound.io/v1alpha1
+      kind: XKubernetesCluster
+      metadata:
+        name: mycluster
+  resources:
+    - name: compositeClusterEKS
+      resource:
+        apiVersion: demo.upbound.io/v1alpha1
+        kind: XEKS
+        spec:
+          teams:
+            - name: team-blue
+              repository: "https://github.com/upbound-demo/team-blue"
+    - name: gitrepository-team-blue
+      resource:
+        apiVersion: source.toolkit.fluxcd.io/v1
+        kind: GitRepository
+        metadata:
+          name: team-blue
+          namespace: flux-system
+        spec:
+          interval: 1m0s
+          ref:
+              branch: main
+          url: "https://github.com/upbound-demo/team-blue"
+    - name: kustomization-team-blue-dev
+      resource:
+        apiVersion: kustomize.toolkit.fluxcd.io/v1beta1
+        kind: Kustomization
+        metadata:
+          name: team-blue-dev
+          namespace: flux-system
+        spec:
+          interval: 1m0s
+          path: ./dev
+          sourceRef:
+              kind: GitRepository
+              name: team-blue
+              namespace: flux-system

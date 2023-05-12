@@ -16,7 +16,13 @@ the composition needs to have an object of type `XEKS` in `demo.upbound.io` grou
 whose name will be used as the `providerConfigRef.name` of all generated `Object`
 resources.
 
-## Releasing
+## Developing
+
+Run the test.
+```bash
+cat test-input.yaml | go run . > /tmp/result.yaml
+diff /tmp/result.yaml test-output.yaml
+```
 
 Build and push the image.
 ```bash
