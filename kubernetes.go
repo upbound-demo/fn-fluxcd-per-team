@@ -9,7 +9,7 @@ import (
 	kubernetesv1alpha1 "github.com/crossplane-contrib/provider-kubernetes/apis/object/v1alpha1"
 )
 
-func WrapForKubernetes(in runtime.RawExtension, providerConfigName string) (runtime.RawExtension, error) {
+func WrapForKubernetes(name, providerConfigName string, in runtime.RawExtension) (runtime.RawExtension, error) {
 	o := kubernetesv1alpha1.Object{
 		Spec: kubernetesv1alpha1.ObjectSpec{
 			ForProvider: kubernetesv1alpha1.ObjectParameters{
@@ -23,6 +23,7 @@ func WrapForKubernetes(in runtime.RawExtension, providerConfigName string) (runt
 		},
 	}
 	o.SetGroupVersionKind(kubernetesv1alpha1.ObjectGroupVersionKind)
+	o.SetName(name)
 	raw, err := json.Marshal(o)
 	if err != nil {
 		return runtime.RawExtension{}, errors.Wrap(err, "failed to marshal object")

@@ -48,7 +48,7 @@ func Run(in []byte) (string, error) {
 	if err != nil {
 		return "", errors.Wrap(err, "failed to get XEKS name from observed composite")
 	}
-	resources, err := GetResources(NamespaceForFlux, providerConfigName, teams)
+	resources, err := GetResources(xkubernetesCluster.GetName(), NamespaceForFlux, providerConfigName, teams)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to generate resources")
 	}

@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/crossplane/crossplane-runtime/pkg/errors"
+	"github.com/crossplane/crossplane-runtime/pkg/password"
 	"github.com/crossplane/crossplane/apis/apiextensions/fn/io/v1alpha1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/json"
@@ -32,15 +33,15 @@ type Environment struct {
 	Path string `json:"path"`
 }
 
-func GetResources(namespace, providerConfigName string, teams []TeamEntry) ([]v1alpha1.DesiredResource, error) {
+func GetResources(compositeName, fluxNamespace, providerConfigName string, teams []TeamEntry) ([]v1alpha1.DesiredResource, error) {
 	resources := []v1alpha1.DesiredResource{}
 	for _, team := range teams {
-		gr := GitRepository(team.Name, namespace, team.Repository)
+		gr := GitRepository(team.Name, fluxNamespace, team.Repository)
 		grRaw, err := json.Marshal(gr)
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to marshal GitRepository %s", gr.GetName())
 		}
-		grORaw, err := WrapForKubernetes(runtime.RawExtension{Raw: grRaw}, providerConfigName)
+		grORaw, err := WrapForKubernetes(generateObjectName(compositeName), providerConfigName, runtime.RawExtension{Raw: grRaw})
 		if err != nil {
 			return nil, errors.Wrapf(err, "failed to wrap GitRepository %s into Object", gr.GetName())
 		}
@@ -54,7 +55,7 @@ func GetResources(namespace, providerConfigName string, teams []TeamEntry) ([]v1
 			if err != nil {
 				return nil, errors.Wrapf(err, "failed to marshal Kustomization %s", k.GetName())
 			}
-			kORaw, err := WrapForKubernetes(runtime.RawExtension{Raw: kRaw}, providerConfigName)
+			kORaw, err := WrapForKubernetes(generateObjectName(compositeName), providerConfigName, runtime.RawExtension{Raw: kRaw})
 			if err != nil {
 				return nil, errors.Wrapf(err, "failed to wrap GitRepository %s into Object", gr.GetName())
 			}
@@ -65,4 +66,12 @@ func GetResources(namespace, providerConfigName string, teams []TeamEntry) ([]v1
 		}
 	}
 	return resources, nil
+}
+
+func generateObjectName(prefix string) string {
+	suf, _ := password.Settings{
+		CharacterSet: "abcdefghijklmnopqrstuvwxyz0123456789",
+		Length:       5,
+	}.Generate()
+	return prefix + "-" + suf
 }

@@ -20,6 +20,15 @@ of the generated `Object`s.
 
 Run the test.
 ```bash
+# If the diff is only a list of random-suffixed names like the following, it's success.
+#39d38
+#<           name: xcluster-h0984
+#66d64
+#<           name: xcluster-nbpk3
+#96d93
+#<           name: xcluster-ee1uf
+#126d122
+#<           name: xcluster-axo4r
 cat test-input.yaml | go run . > /tmp/result.yaml
 diff <(yq -P 'sort_keys(..)' /tmp/result.yaml) <(yq -P 'sort_keys(..)' test-output.yaml)
 ```
