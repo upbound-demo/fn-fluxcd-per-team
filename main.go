@@ -55,15 +55,20 @@ func Run(in []byte) (string, error) {
 		}
 		observedResources[entry.Name] = u
 	}
+	providerConfigName, err := GetNameForProviderConfigs(observedResources)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to get XEKS name from observed composite")
+	}
+	if providerConfigName == "" {
+		// XEKS is not created yet. We need to wait for it.
+		return string(in), nil
+	}
 
 	teams, err := GetTeamEntries(fieldpath.Pave(xkubernetesCluster.Object))
 	if err != nil {
 		return "", errors.Wrap(err, "failed to get teams from observed composite")
 	}
-	providerConfigName, err := GetNameForProviderConfigs(obj.Observed.Resources)
-	if err != nil {
-		return "", errors.Wrap(err, "failed to get XEKS name from observed composite")
-	}
+
 	resources, err := GetResources(NamespaceForFlux, providerConfigName, teams)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to generate resources")
